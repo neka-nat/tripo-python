@@ -81,7 +81,7 @@ class Client:
             )
         return Task(**data.get("data"))
 
-    def try_download_model(self, task_id: str) -> DownloadedModelData:
+    def try_download_model(self, task_id: str) -> Optional[DownloadedModelData]:
         task = self.get_task(task_id)
         model = None
         rendered_image = None
@@ -92,7 +92,7 @@ class Client:
                 rendered_image = self._download_model(task.rendered_image)
             return DownloadedModelData(model=model, rendered_image=rendered_image)
         else:
-            raise APIError(400, 400, "Task is not successful")
+            return None
 
     def upload_file(self, file: Union[str, bytes, Any]) -> UploadFileData:
         """
