@@ -2,6 +2,7 @@ import os
 from typing import Any, List, Optional, Union
 
 import httpx
+from pydantic import BaseModel
 
 from .model import (
     Task,
@@ -11,6 +12,11 @@ from .model import (
     TaskInput,
     FileToken,
 )
+
+
+class DownloadedModelData(BaseModel):
+    model: Optional[bytes]
+    rendered_image: Optional[bytes]
 
 
 class APIError(Exception):
@@ -74,6 +80,19 @@ class Client:
                 suggestion=data.get("suggestion"),
             )
         return Task(**data.get("data"))
+
+    def try_download_model(self, task_id: str) -> DownloadedModelData:
+        task = self.get_task(task_id)
+        model = None
+        rendered_image = None
+        if task.status == "success":
+            if task.model is not None:
+                model = self._download_model(task.model)
+            if task.rendered_image is not None:
+                rendered_image = self._download_model(task.rendered_image)
+            return DownloadedModelData(model=model, rendered_image=rendered_image)
+        else:
+            raise APIError(400, 400, "Task is not successful")
 
     def upload_file(self, file: Union[str, bytes, Any]) -> UploadFileData:
         """
@@ -253,6 +272,13 @@ class Client:
             pivot_to_center_bottom=pivot_to_center_bottom,
         )
         return self.create_task(task_input)
+
+    def _download_model(self, url: str) -> bytes:
+        response = self.client.get(url)
+        if response.status_code == 200:
+            return response.content
+        else:
+            raise APIError(response.status_code, response.status_code, response.text)
 
 
 class AsyncClient:
