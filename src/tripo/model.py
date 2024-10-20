@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, validator, root_validator
+from pydantic import BaseModel, validator, model_validator
 
 
 class FileToken(BaseModel):
@@ -56,51 +56,51 @@ class TaskInput(BaseModel):
             raise ValueError(f"Invalid type: {v}")
         return v
 
-    @root_validator
-    def check_required_fields(cls, values):
-        task_type = values.get("type")
+    @model_validator(mode="after")
+    def check_required_fields(self):
+        task_type = self.type
         if task_type == "text_to_model":
-            if not values.get("prompt"):
+            if not self.prompt:
                 raise ValueError("prompt is required for type text_to_model")
         elif task_type == "image_to_model":
-            if not values.get("file"):
+            if not self.file:
                 raise ValueError("file is required for type image_to_model")
         elif task_type == "multiview_to_model":
-            if not values.get("files") or not values.get("mode"):
+            if not self.files or not self.mode:
                 raise ValueError(
                     "files and mode are required for type multiview_to_model"
                 )
         elif task_type == "refine_model":
-            if not values.get("draft_model_task_id"):
+            if not self.draft_model_task_id:
                 raise ValueError(
                     "draft_model_task_id is required for type refine_model"
                 )
         elif task_type == "animate_prerigcheck":
-            if not values.get("original_model_task_id"):
+            if not self.original_model_task_id:
                 raise ValueError(
                     "original_model_task_id is required for type animate_prerigcheck"
                 )
         elif task_type == "animate_rig":
-            if not values.get("original_model_task_id"):
+            if not self.original_model_task_id:
                 raise ValueError(
                     "original_model_task_id is required for type animate_rig"
                 )
         elif task_type == "animate_retarget":
-            if not values.get("original_model_task_id") or not values.get("animation"):
+            if not self.original_model_task_id or not self.animation:
                 raise ValueError(
                     "original_model_task_id and animation are required for type animate_retarget"
                 )
         elif task_type == "stylize_model":
-            if not values.get("style") or not values.get("original_model_task_id"):
+            if not self.style or not self.original_model_task_id:
                 raise ValueError(
                     "style and original_model_task_id are required for type stylize_model"
                 )
         elif task_type == "convert_model":
-            if not values.get("format") or not values.get("original_model_task_id"):
+            if not self.format or not self.original_model_task_id:
                 raise ValueError(
                     "format and original_model_task_id are required for type convert_model"
                 )
-        return values
+        return self
 
 
 class TaskOutput(BaseModel):
