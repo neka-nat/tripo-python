@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any, List, Optional, Union
 
@@ -13,6 +14,9 @@ from .model import (
     FileToken,
     ModelVersion,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class DownloadedModelData(BaseModel):
@@ -95,11 +99,16 @@ class Client:
         task = self.get_task(task_id)
         model = None
         rendered_image = None
+        logger.debug(f"Task: {task}")
         if task.status == "success":
-            if task.model is not None:
-                model = self._download_model(task.model)
-            if task.rendered_image is not None:
-                rendered_image = self._download_model(task.rendered_image)
+            if task.input["pbr"]:
+                if task.output.pbr_model is not None:
+                    model = self._download_model(task.output.pbr_model)
+            else:
+                if task.output.model is not None:
+                    model = self._download_model(task.output.model)
+            if task.output.rendered_image is not None:
+                rendered_image = self._download_model(task.output.rendered_image)
             return DownloadedModelData(model=model, rendered_image=rendered_image)
         else:
             return None
@@ -284,6 +293,7 @@ class Client:
         return self.create_task(task_input)
 
     def _download_model(self, url: str) -> bytes:
+        logger.debug(f"Downloading model from {url}")
         response = self.client.get(url)
         if response.status_code == 200:
             return response.content
@@ -339,11 +349,16 @@ class AsyncClient:
         task = await self.get_task(task_id)
         model = None
         rendered_image = None
+        logger.debug(f"Task: {task}")
         if task.status == "success":
-            if task.model is not None:
-                model = await self._download_model(task.model)
-            if task.rendered_image is not None:
-                rendered_image = await self._download_model(task.rendered_image)
+            if task.input["pbr"]:
+                if task.output.pbr_model is not None:
+                    model = await self._download_model(task.output.pbr_model)
+            else:
+                if task.output.model is not None:
+                    model = await self._download_model(task.output.model)
+            if task.output.rendered_image is not None:
+                rendered_image = await self._download_model(task.output.rendered_image)
             return DownloadedModelData(model=model, rendered_image=rendered_image)
         else:
             return None
@@ -532,6 +547,7 @@ class AsyncClient:
         return await self.create_task(task_input)
 
     async def _download_model(self, url: str) -> bytes:
+        logger.debug(f"Downloading model from {url}")
         response = await self.client.get(url)
         if response.status_code == 200:
             return response.content
