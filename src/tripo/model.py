@@ -1,6 +1,14 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, validator, model_validator
+
+
+ModelVersion = Literal[
+    "default",
+    "v2.0-20240919",
+    "v1.4-20240625",
+    "v1.3-20240522",
+]
 
 
 class FileToken(BaseModel):
@@ -21,7 +29,7 @@ class TaskInput(BaseModel):
     texture: Optional[bool] = None
     pbr: Optional[bool] = None
     file: Optional[FileToken] = None
-    files: Optional[List[FileToken]] = None
+    files: Optional[list[FileToken]] = None
     mode: Optional[str] = None
     orthographic_projection: Optional[bool] = None
     draft_model_task_id: Optional[str] = None
@@ -114,7 +122,7 @@ class Task(BaseModel):
     task_id: str
     type: str
     status: str
-    input: Dict[str, Any]
+    input: dict[str, Any]
     output: TaskOutput
     progress: int
     create_time: int

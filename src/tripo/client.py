@@ -11,12 +11,22 @@ from .model import (
     BalanceData,
     TaskInput,
     FileToken,
+    ModelVersion,
 )
 
 
 class DownloadedModelData(BaseModel):
     model: Optional[bytes]
     rendered_image: Optional[bytes]
+
+    def save(self, path: str) -> None:
+        if self.model is None:
+            raise ValueError("Model is not downloaded")
+        with open(path, "wb") as f:
+            f.write(self.model)
+        if self.rendered_image:
+            with open(path.replace(".glb", ".png"), "wb") as f:
+                f.write(self.rendered_image)
 
 
 class APIError(Exception):
@@ -153,7 +163,7 @@ class Client:
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
-        model_version: Optional[str] = None,
+        model_version: Optional[ModelVersion] = None,
         face_limit: Optional[int] = None,
         texture: Optional[bool] = None,
         pbr: Optional[bool] = None,
@@ -175,7 +185,7 @@ class Client:
     def image_to_model(
         self,
         file_token: str,
-        model_version: Optional[str] = None,
+        model_version: Optional[ModelVersion] = None,
         face_limit: Optional[int] = None,
         texture: Optional[bool] = None,
         pbr: Optional[bool] = None,
@@ -197,7 +207,7 @@ class Client:
         self,
         files: List[FileToken],
         mode: str,
-        model_version: Optional[str] = None,
+        model_version: Optional[ModelVersion] = None,
         orthographic_projection: Optional[bool] = None,
     ) -> SuccessTaskData:
         """
@@ -325,6 +335,19 @@ class AsyncClient:
             )
         return Task(**data.get("data"))
 
+    async def try_download_model(self, task_id: str) -> Optional[DownloadedModelData]:
+        task = await self.get_task(task_id)
+        model = None
+        rendered_image = None
+        if task.status == "success":
+            if task.model is not None:
+                model = await self._download_model(task.model)
+            if task.rendered_image is not None:
+                rendered_image = await self._download_model(task.rendered_image)
+            return DownloadedModelData(model=model, rendered_image=rendered_image)
+        else:
+            return None
+
     async def upload_file(self, file: Union[str, bytes, Any]) -> UploadFileData:
         """
         Upload a file asynchronously.
@@ -388,7 +411,7 @@ class AsyncClient:
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
-        model_version: Optional[str] = None,
+        model_version: Optional[ModelVersion] = None,
         face_limit: Optional[int] = None,
         texture: Optional[bool] = None,
         pbr: Optional[bool] = None,
@@ -410,7 +433,7 @@ class AsyncClient:
     async def image_to_model(
         self,
         file_token: str,
-        model_version: Optional[str] = None,
+        model_version: Optional[ModelVersion] = None,
         face_limit: Optional[int] = None,
         texture: Optional[bool] = None,
         pbr: Optional[bool] = None,
@@ -432,7 +455,7 @@ class AsyncClient:
         self,
         files: List[FileToken],
         mode: str,
-        model_version: Optional[str] = None,
+        model_version: Optional[ModelVersion] = None,
         orthographic_projection: Optional[bool] = None,
     ) -> SuccessTaskData:
         """
@@ -507,3 +530,12 @@ class AsyncClient:
             pivot_to_center_bottom=pivot_to_center_bottom,
         )
         return await self.create_task(task_input)
+
+    async def _download_model(self, url: str) -> bytes:
+        response = await self.client.get(url)
+        if response.status_code == 200:
+            return response.content
+        else:
+            raise APIError(
+                response.status_code, response.status_code, await response.text()
+            )
