@@ -118,8 +118,14 @@ class Client:
         Upload a file.
         """
         url = "/upload"
-        files = {"file": file}
-        response = self.client.post(url, files=files)
+
+        if isinstance(file, str):
+            with open(file, "rb") as f:
+                files = {"file": (file, f, f"image/{os.path.splitext(file)[1][1:]}")}
+                response = self.client.post(url, files=files)
+        else:
+            files = {"file": file}
+            response = self.client.post(url, files=files)
         if response.status_code != 200:
             raise APIError(response.status_code, response.status_code, response.text)
         data = response.json()
@@ -368,8 +374,14 @@ class AsyncClient:
         Upload a file asynchronously.
         """
         url = "/upload"
-        files = {"file": file}
-        response = await self.client.post(url, files=files)
+
+        if isinstance(file, str):
+            with open(file, "rb") as f:
+                files = {"file": (file, f, f"image/{os.path.splitext(file)[1][1:]}")}
+                response = await self.client.post(url, files=files)
+        else:
+            files = {"file": file}
+            response = await self.client.post(url, files=files)
         if response.status_code != 200:
             raise APIError(response.status_code, response.status_code, response.text)
         data = response.json()
