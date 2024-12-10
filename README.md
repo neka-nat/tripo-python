@@ -65,6 +65,9 @@ from tripo import Client
 with Client() as client:
     # Upload a file
     upload_data = client.upload_file('path/to/your/image.jpg')
+    # Or upload a byte array
+    # byte_image = open('path/to/your/image.jpg', "rb").read()
+    # upload_data = client.upload_file(byte_image)
     print(f"Uploaded file token: {upload_data.image_token}")
 
     # Create a task to generate a model from an image
