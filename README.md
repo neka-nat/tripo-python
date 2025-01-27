@@ -1,4 +1,5 @@
 # Tripo Python Client
+[![PyPI version](https://badge.fury.io/py/tripo.svg)](https://badge.fury.io/py/tripo)
 
 This is a Python client for the Tripo API.
 
