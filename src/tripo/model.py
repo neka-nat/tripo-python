@@ -5,6 +5,7 @@ from pydantic import BaseModel, validator, model_validator
 
 ModelVersion = Literal[
     "default",
+    "v2.5-20250123",
     "v2.0-20240919",
     "v1.4-20240625",
     "v1.3-20240522",
