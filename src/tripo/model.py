@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, validator, model_validator
 
@@ -8,45 +8,61 @@ ModelVersion = Literal[
     "v2.5-20250123",
     "v2.0-20240919",
     "v1.4-20240625",
-    "v1.3-20240522",
 ]
 
 
 class FileToken(BaseModel):
     """File Token"""
 
-    type: str
-    file_token: str
+    type: str | None = None
+    file_token: str | None = None
+
+
+class MultiviewFileTokens(BaseModel):
+    """Multiview File Token"""
+
+    front: FileToken | None = None
+    left: FileToken | None = None
+    back: FileToken | None = None
+    right: FileToken | None = None
+
+    def to_list(self) -> list[FileToken]:
+        return [
+            self.front or FileToken(),
+            self.left or FileToken(),
+            self.back or FileToken(),
+            self.right or FileToken(),
+        ]
 
 
 class TaskInput(BaseModel):
     """Task Input"""
 
-    type: str
-    prompt: Optional[str] = None
-    negative_prompt: Optional[str] = None
-    model_version: Optional[str] = None
-    face_limit: Optional[int] = None
-    texture: Optional[bool] = None
-    pbr: Optional[bool] = None
-    file: Optional[FileToken] = None
-    files: Optional[list[FileToken]] = None
-    mode: Optional[str] = None
-    orthographic_projection: Optional[bool] = None
-    draft_model_task_id: Optional[str] = None
-    original_model_task_id: Optional[str] = None
-    out_format: Optional[str] = None
-    animation: Optional[str] = None
-    style: Optional[str] = None
-    block_size: Optional[int] = None
-    format: Optional[str] = None
-    quad: Optional[bool] = None
-    force_symmetry: Optional[bool] = None
-    flatten_bottom: Optional[bool] = None
-    flatten_bottom_threshold: Optional[float] = None
-    texture_size: Optional[int] = None
-    texture_format: Optional[str] = None
-    pivot_to_center_bottom: Optional[bool] = None
+    type: str | None = None
+    prompt: str | None = None
+    negative_prompt: str | None = None
+    model_version: str | None = None
+    face_limit: int | None = None
+    texture: bool | None = None
+    pbr: bool | None = None
+    file: FileToken | None = None
+    files: list[FileToken] | None = None
+    mode: str | None = None
+    orthographic_projection: bool | None = None
+    draft_model_task_id: str | None = None
+    original_model_task_id: str | None = None
+    out_format: str | None = None
+    animation: str | None = None
+    style: str | None = None
+    block_size: int | None = None
+    format: str | None = None
+    quad: bool | None = None
+    force_symmetry: bool | None = None
+    flatten_bottom: bool | None = None
+    flatten_bottom_threshold: float | None = None
+    texture_size: int | None = None
+    texture_format: str | None = None
+    pivot_to_center_bottom: bool | None = None
 
     @validator("type")
     def validate_type(cls, v):
@@ -75,10 +91,8 @@ class TaskInput(BaseModel):
             if not self.file:
                 raise ValueError("file is required for type image_to_model")
         elif task_type == "multiview_to_model":
-            if not self.files or not self.mode:
-                raise ValueError(
-                    "files and mode are required for type multiview_to_model"
-                )
+            if not self.files:
+                raise ValueError("files are required for type multiview_to_model")
         elif task_type == "refine_model":
             if not self.draft_model_task_id:
                 raise ValueError(
@@ -113,10 +127,10 @@ class TaskInput(BaseModel):
 
 
 class TaskOutput(BaseModel):
-    model: Optional[str] = None
-    base_model: Optional[str] = None
-    pbr_model: Optional[str] = None
-    rendered_image: Optional[str] = None
+    model: str | None = None
+    base_model: str | None = None
+    pbr_model: str | None = None
+    rendered_image: str | None = None
 
 
 class Task(BaseModel):

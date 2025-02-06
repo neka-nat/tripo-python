@@ -12,6 +12,7 @@ from .model import (
     BalanceData,
     TaskInput,
     FileToken,
+    MultiviewFileTokens,
     ModelVersion,
 )
 
@@ -113,7 +114,7 @@ class Client:
         else:
             return None
 
-    def upload_file(self, file: Union[str, bytes, Any]) -> UploadFileData:
+    def upload_file(self, file: Union[str, bytes, Any]) -> FileToken:
         """
         Upload a file.
         """
@@ -136,7 +137,8 @@ class Client:
                 message=data.get("message", "Unknown error"),
                 suggestion=data.get("suggestion"),
             )
-        return UploadFileData(**data.get("data"))
+        data = UploadFileData(**data.get("data"))
+        return FileToken(type=os.path.splitext(file)[1][1:], file_token=data.image_token)
 
     def create_task(self, task_input: TaskInput) -> SuccessTaskData:
         """
@@ -199,7 +201,7 @@ class Client:
 
     def image_to_model(
         self,
-        file_token: str,
+        file_token: FileToken,
         model_version: Optional[ModelVersion] = None,
         face_limit: Optional[int] = None,
         texture: Optional[bool] = None,
@@ -210,7 +212,7 @@ class Client:
         """
         task_input = TaskInput(
             type="image_to_model",
-            file=FileToken(type="image", file_token=file_token),
+            file=file_token,
             model_version=model_version,
             face_limit=face_limit,
             texture=texture,
@@ -220,20 +222,22 @@ class Client:
 
     def multiview_to_model(
         self,
-        files: List[FileToken],
-        mode: str,
+        file_tokens: MultiviewFileTokens,
         model_version: Optional[ModelVersion] = None,
-        orthographic_projection: Optional[bool] = None,
+        face_limit: Optional[int] = None,
+        texture: Optional[bool] = None,
+        pbr: Optional[bool] = None,
     ) -> SuccessTaskData:
         """
         Create a task to generate a model from multiple views.
         """
         task_input = TaskInput(
             type="multiview_to_model",
-            files=files,
-            mode=mode,
+            files=file_tokens.to_list(),
             model_version=model_version,
-            orthographic_projection=orthographic_projection,
+            face_limit=face_limit,
+            texture=texture,
+            pbr=pbr,
         )
         return self.create_task(task_input)
 
@@ -369,7 +373,7 @@ class AsyncClient:
         else:
             return None
 
-    async def upload_file(self, file: Union[str, bytes, Any]) -> UploadFileData:
+    async def upload_file(self, file: Union[str, bytes, Any]) -> FileToken:
         """
         Upload a file asynchronously.
         """
@@ -392,7 +396,8 @@ class AsyncClient:
                 message=data.get("message", "Unknown error"),
                 suggestion=data.get("suggestion"),
             )
-        return UploadFileData(**data.get("data"))
+        data = UploadFileData(**data.get("data"))
+        return FileToken(type=os.path.splitext(file)[1][1:], file_token=data.image_token)
 
     async def create_task(self, task_input: TaskInput) -> SuccessTaskData:
         """
@@ -459,7 +464,7 @@ class AsyncClient:
 
     async def image_to_model(
         self,
-        file_token: str,
+        file_token: FileToken,
         model_version: Optional[ModelVersion] = None,
         face_limit: Optional[int] = None,
         texture: Optional[bool] = None,
@@ -470,7 +475,7 @@ class AsyncClient:
         """
         task_input = TaskInput(
             type="image_to_model",
-            file=FileToken(type="image", file_token=file_token),
+            file=file_token,
             model_version=model_version,
             face_limit=face_limit,
             texture=texture,
@@ -480,20 +485,22 @@ class AsyncClient:
 
     async def multiview_to_model(
         self,
-        files: List[FileToken],
-        mode: str,
+        file_tokens: MultiviewFileTokens,
         model_version: Optional[ModelVersion] = None,
-        orthographic_projection: Optional[bool] = None,
+        face_limit: Optional[int] = None,
+        texture: Optional[bool] = None,
+        pbr: Optional[bool] = None,
     ) -> SuccessTaskData:
         """
         Create a task to generate a model from multiple views asynchronously.
         """
         task_input = TaskInput(
             type="multiview_to_model",
-            files=files,
-            mode=mode,
+            files=file_tokens.to_list(),
             model_version=model_version,
-            orthographic_projection=orthographic_projection,
+            face_limit=face_limit,
+            texture=texture,
+            pbr=pbr,
         )
         return await self.create_task(task_input)
 
