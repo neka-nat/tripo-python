@@ -102,7 +102,10 @@ class Client:
         rendered_image = None
         logger.debug(f"Task: {task}")
         if task.status == "success":
-            if task.input["pbr"]:
+            if not task.input["texture"]:
+                if task.output.base_model is not None:
+                    model = self._download_model(task.output.base_model)
+            elif task.input["pbr"]:
                 if task.output.pbr_model is not None:
                     model = self._download_model(task.output.pbr_model)
             else:
@@ -361,7 +364,10 @@ class AsyncClient:
         rendered_image = None
         logger.debug(f"Task: {task}")
         if task.status == "success":
-            if task.input["pbr"]:
+            if not task.input["texture"]:
+                if task.output.base_model is not None:
+                    model = await self._download_model(task.output.base_model)
+            elif task.input["pbr"]:
                 if task.output.pbr_model is not None:
                     model = await self._download_model(task.output.pbr_model)
             else:
